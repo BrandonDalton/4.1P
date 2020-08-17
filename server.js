@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { ObjectID } = require('mongodb');
 const { body, validationResult } = require('express-validator');
 
-const url = 'mongodb://127.0.0.1:27017'
+const url = 'mongodb://127.0.0.1:27017/db_users'
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
 
@@ -71,7 +71,7 @@ const userSchema = new mongoose.Schema(
   }
 )
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model("users", userSchema);
 
 //Application
 
