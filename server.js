@@ -116,8 +116,13 @@ body('password').custom((value, { req }) => {
       }
     )
 
-    user.save(err => {});
-    return res.send('Success');
+    user.save(err => {
+          if (err)
+      {console.log(err)}
+      else
+      {console.log("Successfull!")}
+      return res.send('Success');
+      })
   }
 });
 
