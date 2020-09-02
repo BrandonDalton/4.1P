@@ -1,8 +1,11 @@
 const express = require('express')
 const bodyParser = require("body-parser")
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const { ObjectID } = require('mongodb');
 const { body, validationResult } = require('express-validator');
+const { query } = require('express');
+const e = require('express');
 
 const url = 'mongodb://127.0.0.1:27017/db_users'
 const app = express();
@@ -10,6 +13,9 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 const port = 8080;
 const base = `${__dirname}/public`
+
+const saltRounds = 10;
+
 
 //Database
 
@@ -100,31 +106,72 @@ body('password').custom((value, { req }) => {
   } else {
 
     userID = ObjectID();
+    const password = req.body.password;
+    //Password Hasing Storing
 
-    const user = new User(
-      {
-        _id: userID,
-        fname: req.body.fname,
-        lname: req.body.lname,
-        email: req.body.email,
-        password: req.body.password,
-        address: req.body.address,
-        city: req.body.city,
-        state: req.body.state,
-        postcode: req.body.postcode,
-        mobile: req.body.mobile
-      }
-    )
+    //Hashes The Password
+    bcrypt.genSalt(saltRounds, function (err, salt) {
+      bcrypt.hash(password, salt, function (err, hash) {
+        //If No Errors  Create User
+        const user = new User(
+          {
+            _id: userID,
+            fname: req.body.fname,
+            lname: req.body.lname,
+            email: req.body.email,
+            password: hash,
+            address: req.body.address,
+            city: req.body.city,
+            state: req.body.state,
+            postcode: req.body.postcode,
+            mobile: req.body.mobile
+          }
+        )
 
-    user.save(err => {
-          if (err)
-      {console.log(err)}
-      else
-      {console.log("Successfull!")}
-      return res.send('Success');
+        user.save(err => {
+          if (err) { console.log(err) }
+          else { console.log("Successfull!") }
+          return res.redirect('login.html')
+        })
       })
+    })
   }
 });
+
+app.post('/loginForm', function (req, res) {
+  
+  //User Login Email Input
+  const userEmailLogin = req.body.email;
+
+  //Search To See If Email Exists
+  User.findOne({ email: userEmailLogin }, function (err, acc) {
+    //If Errors Log
+    if (err) {
+      console.log("Errors:" ,err)
+    }
+    else {
+      //If Document Is Null
+      if(acc == null) {
+        //Cant Find Account
+        console.log("Errors:" , 'Cant Find Login Details')
+      } else {
+        //Input Password
+        const passwordInput = req.body.password;
+        //Compare Database Has vs Password
+        bcrypt.compare(passwordInput, acc.password, function(err, result) {
+          //If Correct Redirect
+          if(result == true){
+            res.redirect('reqlogin.html')
+          } else {
+            //Password is incorrect
+            console.log('Password Is Incorrect.')
+          }
+      });
+      }
+      
+    }
+  });
+})
 
 app.listen(port, function () {
   console.log('Server Is Running On Port 3000');
