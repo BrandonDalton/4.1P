@@ -4,8 +4,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const { ObjectID } = require('mongodb');
 const { body, validationResult } = require('express-validator');
-const { query } = require('express');
-const e = require('express');
+const mailchimp = require('@mailchimp/mailchimp_marketing');
 
 const url = 'mongodb://127.0.0.1:27017/db_users'
 const app = express();
@@ -15,6 +14,35 @@ const port = 8080;
 const base = `${__dirname}/public`
 
 const saltRounds = 10;
+
+mailchimp.setConfig({
+  apiKey: "dd440949bd38832bd72b4281546b7669-us17",
+  server: "us17",
+});
+
+async function callPing() {
+  const response = await mailchimp.ping.get();
+  console.log(response);
+}
+
+callPing();
+
+const listId = "ca5e1222ed";
+
+async function addUserToMail(email, fname, lname) {
+  console.log('Running Start', email, fname, lname );
+  const response = await mailchimp.lists.addListMember(listId, {
+    email_address: email,
+    status: "subscribed",
+    merge_fields: {
+      FNAME: fname,
+      LNAME: lname
+    }
+  })
+  console.log('Running' , response);
+}
+
+
 
 
 //Database
@@ -130,8 +158,11 @@ body('password').custom((value, { req }) => {
 
         user.save(err => {
           if (err) { console.log(err) }
-          else { console.log("Successfull!") }
+          else { console.log("Successfull!")
+          // addUserToMail(user.email, user.fname, user.lname);
+          addUserToMail(user.email, user.fname, user.lname);
           return res.redirect('login.html')
+        }
         })
       })
     })
