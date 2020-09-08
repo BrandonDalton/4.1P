@@ -1,6 +1,10 @@
 const express = require('express')
 const bodyParser = require("body-parser")
 const mongoose = require('mongoose');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const User = require('./models/User');
 const bcrypt = require('bcrypt');
 const { ObjectID } = require('mongodb');
 const { body, validationResult } = require('express-validator');
@@ -48,7 +52,7 @@ async function addUserToMail(email, fname, lname) {
 
 //Database
 
-mongoose.connect(url, { useNewUrlParser: true })
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
 
 const db = mongoose.connection
 
@@ -60,58 +64,29 @@ db.on('error', err => {
   console.error('connection error:', err)
 })
 
-const userSchema = new mongoose.Schema(
-  {
-    _id: {
-      type: String,
-      required: true
-    },
-    fname: {
-      type: String,
-      trim: true,
-      required: true
-    },
-    lname: {
-      type: String,
-      trim: true,
-      required: true
-    },
-    email: {
-      type: String,
-      trim: true,
-      required: true
-    },
-    password: {
-      type: String,
-      required: true
-    },
-    address: {
-      type: String,
-      required: true
-    },
-    city: {
-      type: String,
-      required: true
-    },
-    state: {
-      type: String,
-      required: true
-    },
-    postcode: {
-      type: String
-    },
-    mobile: {
-      type: String
-    }
-  }
-)
-
-
-const User = mongoose.model("users", userSchema);
 
 //Application
 
 app.use(express.static('public'));
+
+//Express Generate Session
+app.use(session({
+  secret: 'password secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 120000 }
+}))
+
+//Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(User.createStrategy())
+
+// use static serialize and deserialize of model for passport session support
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
 
 app.get('/', (req, res) => {
   res.sendFile('index.html');
@@ -143,30 +118,51 @@ body('password').custom((value, { req }) => {
     bcrypt.genSalt(saltRounds, function (err, salt) {
       bcrypt.hash(password, salt, function (err, hash) {
         //If No Errors  Create User
-        const user = new User(
-          {
-            _id: userID,
-            fname: req.body.fname,
-            lname: req.body.lname,
-            email: req.body.email,
-            password: hash,
-            address: req.body.address,
-            city: req.body.city,
-            state: req.body.state,
-            postcode: req.body.postcode,
-            mobile: req.body.mobile
-          }
-        )
+        // const user = new User(
+        //   {
+        //     username: req.body.email,
+        //     _id: userID,
+        //     fname: req.body.fname,
+        //     lname: req.body.lname,
+        //     email: req.body.email,
+        //     password: hash,
+        //     address: req.body.address,
+        //     city: req.body.city,
+        //     state: req.body.state,
+        //     postcode: req.body.postcode,
+        //     mobile: req.body.mobile
+        //   }
+        // )
 
-        user.save(err => {
-          if (err) { console.log(err) }
-          else {
-            console.log("Successfull!")
-            // addUserToMail(user.email, user.fname, user.lname);
-            addUserToMail(user.email, user.fname, user.lname);
-            return res.redirect('login.html')
-          }
-        })
+        User.register({ username: req.body.email },
+          { _id: userID },
+          { fname: req.body.fname },
+          { lname: req.body.lname },
+          { email: req.body.email },
+          { password: hash },
+          { address: req.body.address },
+          { city: req.body.city },
+          { state: req.body.state },
+          { postcode: req.body.postcode },
+          { mobile: req.body.mobile }, (err, user) => {
+            if (err) {
+              console.log(err)
+              res.redirect('/')
+            }
+            else {
+              passport.authenticate('local')(req, res, () => { res.redirect('login.html') })
+            }
+          })
+
+        // user.save(err => {
+        //   if (err) { console.log(err) }
+        //   else {
+        //     console.log("Successfull!")
+        //     // addUserToMail(user.email, user.fname, user.lname);
+        //     addUserToMail(user.email, user.fname, user.lname);
+        //     passport.authenticate('local')(req, res, () => { res.redirect('login.html') })
+        //   }
+        // })
       })
     })
   }
@@ -284,6 +280,14 @@ app.route('/workers/:id')
       })
     })
   })
+
+app.get('/loginForm', function (req, res) {
+  console.log('Get Running')
+  console.log('Accept', req.isAuthenticated());
+  if (req.isAuthenticated()) {
+    res.sendFile('reqlogin.html')
+  }
+})
 
 app.post('/loginForm', function (req, res) {
 
