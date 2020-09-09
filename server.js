@@ -107,6 +107,7 @@ body('password').custom((value, { req }) => {
 
   if (hasErrors) {
     console.log('User Not Created Error');
+    console.log(errors);
     return res.send('User Not Created');
   } else {
 
@@ -120,7 +121,7 @@ body('password').custom((value, { req }) => {
         // If No Errors  Create User
         const user = new User(
           {
-            username: req.body.email,
+            username: req.body.username,
             _id: userID,
             fname: req.body.fname,
             lname: req.body.lname,
@@ -140,7 +141,8 @@ body('password').custom((value, { req }) => {
             console.log("Successfull!")
             // addUserToMail(user.email, user.fname, user.lname);
             // addUserToMail(user.email, user.fname, user.lname);
-            passport.authenticate('local')(req, res, () => { res.redirect('/loginForm') });
+            passport.authenticate('local', { successRedirect:'/',
+            failureRedirect: '/loginForm' })(req, res, () => { res.redirect('/loginForm') });
             // passport.authenticate()(req, res, () => { res.redirect('login.html') })
           }
         })
@@ -266,7 +268,9 @@ app.get('/loginForm', function (req, res) {
   console.log('Get Running')
   console.log('Accept', req.isAuthenticated());
   if (req.isAuthenticated()) {
-    res.sendFile('reqlogin.html')
+    res.redirect('reqlogin.html')
+  } else {
+    res.redirect('login.html')
   }
 })
 
