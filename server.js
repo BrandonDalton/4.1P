@@ -25,30 +25,30 @@ mailchimp.setConfig({
   server: "us17",
 });
 
-// Checks Response Is Successful
-async function callPing() {
-  const response = await mailchimp.ping.get();
-  console.log(response);
-}
+// // Checks Response Is Successful
+// async function callPing() {
+//   const response = await mailchimp.ping.get();
+//   console.log(response);
+// }
 
-callPing();
+// callPing();
 
 // Mailing List ID
 const listId = "ca5e1222ed";
 
-//Add User Function To Mail
-async function addUserToMail(email, fname, lname) {
-  console.log('Running Start', email, fname, lname);
-  const response = await mailchimp.lists.addListMember(listId, {
-    email_address: email,
-    status: "subscribed",
-    merge_fields: {
-      FNAME: fname,
-      LNAME: lname
-    }
-  })
-  console.log('Running', response);
-}
+// //Add User Function To Mail
+// async function addUserToMail(email, fname, lname) {
+//   console.log('Running Start', email, fname, lname);
+//   const response = await mailchimp.lists.addListMember(listId, {
+//     email_address: email,
+//     status: "subscribed",
+//     merge_fields: {
+//       FNAME: fname,
+//       LNAME: lname
+//     }
+//   })
+//   console.log('Running', response);
+// }
 
 //Database
 
@@ -117,52 +117,33 @@ body('password').custom((value, { req }) => {
     //Hashes The Password
     bcrypt.genSalt(saltRounds, function (err, salt) {
       bcrypt.hash(password, salt, function (err, hash) {
-        //If No Errors  Create User
-        // const user = new User(
-        //   {
-        //     username: req.body.email,
-        //     _id: userID,
-        //     fname: req.body.fname,
-        //     lname: req.body.lname,
-        //     email: req.body.email,
-        //     password: hash,
-        //     address: req.body.address,
-        //     city: req.body.city,
-        //     state: req.body.state,
-        //     postcode: req.body.postcode,
-        //     mobile: req.body.mobile
-        //   }
-        // )
+        // If No Errors  Create User
+        const user = new User(
+          {
+            username: req.body.email,
+            _id: userID,
+            fname: req.body.fname,
+            lname: req.body.lname,
+            email: req.body.email,
+            password: hash,
+            address: req.body.address,
+            city: req.body.city,
+            state: req.body.state,
+            postcode: req.body.postcode,
+            mobile: req.body.mobile
+          }
+        )
 
-        User.register({ username: req.body.email },
-          { _id: userID },
-          { fname: req.body.fname },
-          { lname: req.body.lname },
-          { email: req.body.email },
-          { password: hash },
-          { address: req.body.address },
-          { city: req.body.city },
-          { state: req.body.state },
-          { postcode: req.body.postcode },
-          { mobile: req.body.mobile }, (err, user) => {
-            if (err) {
-              console.log(err)
-              res.redirect('/')
-            }
-            else {
-              passport.authenticate('local')(req, res, () => { res.redirect('login.html') })
-            }
-          })
-
-        // user.save(err => {
-        //   if (err) { console.log(err) }
-        //   else {
-        //     console.log("Successfull!")
-        //     // addUserToMail(user.email, user.fname, user.lname);
-        //     addUserToMail(user.email, user.fname, user.lname);
-        //     passport.authenticate('local')(req, res, () => { res.redirect('login.html') })
-        //   }
-        // })
+        user.save(err => {
+          if (err) { console.log(err) }
+          else {
+            console.log("Successfull!")
+            // addUserToMail(user.email, user.fname, user.lname);
+            // addUserToMail(user.email, user.fname, user.lname);
+            passport.authenticate('local')(req, res, () => { res.redirect('/loginForm') });
+            // passport.authenticate()(req, res, () => { res.redirect('login.html') })
+          }
+        })
       })
     })
   }
