@@ -22,12 +22,12 @@ mailchimp.setConfig({
 });
 
 // Checks Response Is Successful
-async function callPing() {
-  const response = await mailchimp.ping.get();
-  console.log(response);
-}
+// async function callPing() {
+//   const response = await mailchimp.ping.get();
+//   console.log(response);
+// }
 
-callPing();
+// callPing();
 
 // Mailing List ID
 const listId = "ca5e1222ed";
@@ -48,7 +48,7 @@ async function addUserToMail(email, fname, lname) {
 
 //Database
 
-mongoose.connect(url, { useNewUrlParser: true })
+mongoose.connect(url, { useNewUrlParser: true  , useUnifiedTopology: true})
 
 const db = mongoose.connection
 
@@ -163,7 +163,7 @@ body('password').custom((value, { req }) => {
           else {
             console.log("Successfull!")
             // addUserToMail(user.email, user.fname, user.lname);
-            addUserToMail(user.email, user.fname, user.lname);
+            // addUserToMail(user.email, user.fname, user.lname);
             return res.redirect('login.html')
           }
         })
